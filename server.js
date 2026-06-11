@@ -19,32 +19,24 @@ app.use(express.json());
 // API Routes
 app.use('/api/recommendations', recommendationsRoute);
 
-// Serve Static Assets in Production (React Build)
+// Serve Static Assets in Production (React Build) if present
 const fs = require('fs');
-const localPublicPath = path.join(__dirname, 'public');
 const clientBuildPath = path.join(__dirname, '..', 'client', 'dist');
 
-let staticPath = null;
-if (fs.existsSync(localPublicPath)) {
-  staticPath = localPublicPath;
-} else if (fs.existsSync(clientBuildPath)) {
-  staticPath = clientBuildPath;
-}
-
-if (staticPath) {
-  app.use(express.static(staticPath));
+if (fs.existsSync(clientBuildPath)) {
+  app.use(express.static(clientBuildPath));
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) {
       return next();
     }
-    res.sendFile(path.join(staticPath, 'index.html'));
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
   });
 } else {
   // Safe fallback if client is hosted separately (e.g. Vercel, Netlify)
   app.get('/', (req, res) => {
-    res.json({ 
-      status: "success", 
-      message: "AeroMatch Contextual Matching API is running successfully!" 
+    res.json({
+      status: "success",
+      message: "AeroMatch Contextual Matching API is running successfully!"
     });
   });
 }
