@@ -19,16 +19,27 @@ app.use(express.json());
 // API Routes
 app.use('/api/recommendations', recommendationsRoute);
 
-// Serve Static Assets in Production (React Build)
-app.use(express.static(path.join(__dirname, '..', 'client', 'dist')));
+// Serve Static Assets in Production (React Build) if present
+const fs = require('fs');
+const clientBuildPath = path.join(__dirname, '..', 'client', 'dist');
 
-// Fallback for SPA routing: send index.html for non-API requests
-app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api')) {
-    return next();
-  }
-  res.sendFile(path.join(__dirname, '..', 'client', 'dist', 'index.html'));
-});
+if (fs.existsSync(clientBuildPath)) {
+  app.use(express.static(clientBuildPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+  });
+} else {
+  // Safe fallback if client is hosted separately (e.g. Vercel, Netlify)
+  app.get('/', (req, res) => {
+    res.json({ 
+      status: "success", 
+      message: "AeroMatch Contextual Matching API is running successfully!" 
+    });
+  });
+}
 
 // Error handling middleware
 app.use((err, req, res, next) => {
