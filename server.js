@@ -19,17 +19,25 @@ app.use(express.json());
 // API Routes
 app.use('/api/recommendations', recommendationsRoute);
 
-// Serve Static Assets in Production (React Build) if present
+// Serve Static Assets in Production (React Build)
 const fs = require('fs');
+const localPublicPath = path.join(__dirname, 'public');
 const clientBuildPath = path.join(__dirname, '..', 'client', 'dist');
 
-if (fs.existsSync(clientBuildPath)) {
-  app.use(express.static(clientBuildPath));
+let staticPath = null;
+if (fs.existsSync(localPublicPath)) {
+  staticPath = localPublicPath;
+} else if (fs.existsSync(clientBuildPath)) {
+  staticPath = clientBuildPath;
+}
+
+if (staticPath) {
+  app.use(express.static(staticPath));
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) {
       return next();
     }
-    res.sendFile(path.join(clientBuildPath, 'index.html'));
+    res.sendFile(path.join(staticPath, 'index.html'));
   });
 } else {
   // Safe fallback if client is hosted separately (e.g. Vercel, Netlify)
